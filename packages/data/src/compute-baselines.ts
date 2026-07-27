@@ -1,3 +1,5 @@
+import { Stats } from 'als-statistics';
+import { TimeSeries } from 'pond-ts';
 import { getDb } from './db.js';
 import {
   beneficiaries,
@@ -8,7 +10,7 @@ import {
   providerBaselines,
   regionBaselines,
 } from './schema.js';
-import { eq, sql, and, gte, lt, isNotNull } from 'drizzle-orm';
+import { eq, and, isNotNull } from 'drizzle-orm';
 
 const db = () => getDb();
 
@@ -48,7 +50,6 @@ export function computeProviderBaselines(): ProviderBaseline[] {
 
   if (allProviders.length === 0 || allDrgs.length === 0) return [];
 
-  // Per-provider DRG counts
   const drgCountsByProvider = new Map<string, Map<number, number>>();
   const totalClaimsByProvider = new Map<string, number>();
 
@@ -71,7 +72,6 @@ export function computeProviderBaselines(): ProviderBaseline[] {
     totalClaimsByProvider.set(c.providerId, (totalClaimsByProvider.get(c.providerId) ?? 0) + 1);
   }
 
-  // Compute DRG rates per provider, then peer stats per DRG
   const results: ProviderBaseline[] = [];
 
   for (const p of allProviders) {
@@ -83,7 +83,6 @@ export function computeProviderBaselines(): ProviderBaseline[] {
       providerRates.set(drg.code, totalClaims > 0 ? count / totalClaims : 0);
     }
 
-    // Peer stats per DRG
     const drgDistribution: DrgDistributionEntry[] = [];
     for (const drg of allDrgs) {
       const rates: number[] = [];
@@ -96,14 +95,11 @@ export function computeProviderBaselines(): ProviderBaseline[] {
         }
       }
 
-      const peerMean = rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-      const peerVariance =
-        rates.length > 1
-          ? rates.reduce((sum, r) => sum + (r - peerMean) ** 2, 0) / (rates.length - 1)
-          : 0;
-      const peerStdDev = Math.sqrt(peerVariance);
+      const peerMean = rates.length > 0 ? Stats.mean({ values: rates }) : 0;
+      const peerStdDev =
+        rates.length > 1 ? Stats.stdDevSample({ values: rates }) : 0;
       const providerRate = providerRates.get(drg.code) ?? 0;
-      const zScore = peerStdDev > 0 ? (providerRate - peerMean) / peerStdDev : 0;
+      const zScore = Stats.zScore({ mean: peerMean, stdDev: peerStdDev, values: rates }, providerRate);
 
       drgDistribution.push({
         drgCode: drg.code,
@@ -115,23 +111,17 @@ export function computeProviderBaselines(): ProviderBaseline[] {
       });
     }
 
-    // Readmission rate
     const readmission = computeReadmissionRate(p.id);
     const allReadmissionRates = allProviders
       .filter((pp) => pp.id !== p.id)
       .map((pp) => computeReadmissionRate(pp.id));
     const readmissionPeerMean =
-      allReadmissionRates.length > 0
-        ? allReadmissionRates.reduce((a, b) => a + b, 0) / allReadmissionRates.length
-        : 0;
-    const readmissionVariance =
+      allReadmissionRates.length > 0 ? Stats.mean({ values: allReadmissionRates }) : 0;
+    const readmissionPeerStdDev =
       allReadmissionRates.length > 1
-        ? allReadmissionRates.reduce((sum, r) => sum + (r - readmissionPeerMean) ** 2, 0) /
-          (allReadmissionRates.length - 1)
+        ? Stats.stdDevSample({ values: allReadmissionRates })
         : 0;
-    const readmissionPeerStdDev = Math.sqrt(readmissionVariance);
 
-    // Patient acuity (avg number of chronic conditions per patient for this provider)
     const acuity = computePatientAcuity(p.id);
 
     results.push({
@@ -151,7 +141,6 @@ export function computeProviderBaselines(): ProviderBaseline[] {
 function computeReadmissionRate(providerId: string): number {
   const d = db();
 
-  // Get all discharges for this provider, ordered by patient and date
   const discharges = d
     .select({
       beneficiaryId: inpatientClaims.beneficiaryId,
@@ -172,7 +161,6 @@ function computeReadmissionRate(providerId: string): number {
   let readmissionCount = 0;
   let indexAdmissionCount = 0;
 
-  // Group by beneficiary, check for readmissions within 30 days
   const byPatient = new Map<string, string[]>();
   for (const d of discharges) {
     if (!byPatient.has(d.beneficiaryId)) byPatient.set(d.beneficiaryId, []);
@@ -234,7 +222,6 @@ function computePatientAcuity(providerId: string): number {
 export function computeRegionBaselines(): RegionWeekBaseline[] {
   const d = db();
 
-  // Get ER visits by provider and week
   const visits = d
     .select({
       providerId: outpatientClaims.providerId,
@@ -243,26 +230,43 @@ export function computeRegionBaselines(): RegionWeekBaseline[] {
     .from(outpatientClaims)
     .all();
 
-  // Map provider to region
   const providerRegion = new Map<string, string>();
   const allProviders = d.select().from(providers).all();
   for (const p of allProviders) {
-    const region = getRegion(p.stateCode);
-    if (!providerRegion.has(p.id)) providerRegion.set(p.id, region);
+    if (!providerRegion.has(p.id)) providerRegion.set(p.id, getRegion(p.stateCode));
   }
 
-  // Aggregate by region and week
+  const filtered = visits.filter((v) => providerRegion.has(v.providerId));
+  if (filtered.length === 0) return [];
+
+  // Build pond-ts TimeSeries indexed by claim timestamps
+  const timestamps = filtered.map((v) => new Date(v.claimStartDate).getTime() / 1000);
+  const counts = filtered.map(() => 1);
+
+  const ts = TimeSeries.fromColumns({
+    name: 'er_visits',
+    schema: [{ name: 'time', kind: 'time' }, { name: 'count', kind: 'number' }],
+    columns: { time: timestamps, count: counts },
+  });
+
+  // Aggregate into region-week buckets
   const regionWeekVolumes = new Map<string, number>();
-  for (const v of visits) {
-    const region = providerRegion.get(v.providerId) ?? 'Unknown';
-    const date = new Date(v.claimStartDate);
+  const points = ts.toPoints();
+
+  for (let i = 0; i < points.length; i++) {
+    const pt = points[i]!;
+    if ((pt as { ts?: number }).ts === undefined) continue;
+    const timestamp = (pt as { ts: number }).ts;
+    const date = new Date(timestamp * 1000);
     const year = date.getFullYear();
     const week = getWeekNumber(date);
-    const key = `${region}|${year}-W${String(week).padStart(2, '0')}`;
+    const yearWeek = `${year}-W${String(week).padStart(2, '0')}`;
+    const region = providerRegion.get(filtered[i]!.providerId) ?? 'Unknown';
+    const key = `${region}|${yearWeek}`;
     regionWeekVolumes.set(key, (regionWeekVolumes.get(key) ?? 0) + 1);
   }
 
-  // Compute region-level stats
+  // Compute region-level stats using als-statistics
   const regionVolumes = new Map<string, number[]>();
   for (const [key, volume] of regionWeekVolumes) {
     const [region] = key.split('|');
@@ -276,12 +280,11 @@ export function computeRegionBaselines(): RegionWeekBaseline[] {
   for (const [key, volume] of sortedEntries) {
     const [region, yearWeek] = key.split('|');
     const volumes = regionVolumes.get(region!) ?? [];
-    const mean = volumes.length > 0 ? volumes.reduce((a, b) => a + b, 0) / volumes.length : 0;
-    const variance =
-      volumes.length > 1
-        ? volumes.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (volumes.length - 1)
-        : 0;
-    const stdDev = Math.sqrt(variance);
+
+    const mean = volumes.length > 0 ? Stats.mean({ values: volumes }) : 0;
+    const stdDev =
+      volumes.length > 1 ? Stats.stdDevSample({ values: volumes }) : 0;
+
     const prevWeek = getPreviousWeekKey(yearWeek!);
     const prevVolume = regionWeekVolumes.get(`${region}|${prevWeek}`) ?? mean;
     const wowChange = prevVolume > 0 ? (volume - prevVolume) / prevVolume : 0;
@@ -333,13 +336,11 @@ function getPreviousWeekKey(yearWeek: string): string {
 export function storeBaselines() {
   const d = db();
 
-  // Clear existing baselines
   d.delete(providerBaselines).run();
   d.delete(regionBaselines).run();
 
   const now = new Date().toISOString();
 
-  // Store provider baselines
   const provBls = computeProviderBaselines();
   for (const bl of provBls) {
     d.insert(providerBaselines)
@@ -356,7 +357,6 @@ export function storeBaselines() {
       .run();
   }
 
-  // Store region baselines
   const regionBls = computeRegionBaselines();
   for (const bl of regionBls) {
     d.insert(regionBaselines)
