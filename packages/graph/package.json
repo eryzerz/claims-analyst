@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
@@ -15,6 +16,7 @@
     "kuzu": "^0.11.3"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.10"
   }
 }
