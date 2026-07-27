@@ -3,3 +3,12 @@ dist/
 .next/
 .turbo/
 *.tsbuildinfo
+
+# domain learning related docs
+learning-records/
+lessons/
+reference/
+assets/
+MISSION.md
+NOTES.md
+RESOURCES.md
