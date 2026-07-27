@@ -1,4 +1,5 @@
 import type { Connection as KuzuConnection, KuzuValue } from 'kuzu';
+import { SIGNAL_CATEGORY } from '@claims-analyst/shared';
 import { createSchema } from './schema.js';
 
 export interface GraphSeedResult {
@@ -152,27 +153,27 @@ export function seedGraph(
 
   // Hypothesis edges: HYPOTHESIZES
   const hypotheses: Array<[string, string, string, string, string]> = [
-    ['metric_mcc_rate', 'metric_drg_coding_distribution', 'upcoding',
+    ['metric_mcc_rate', 'metric_drg_coding_distribution', SIGNAL_CATEGORY.UPCODING,
       'Is the provider coding more MCC-qualifying diagnoses than peers with similar patient mix?',
       'MATCH (ic:InpatientClaim)-[:SUBMITTED_BY]->(p:Provider {id: $providerId}), (ic)-[:CLASSIFIED_AS]->(d:DRG) WHERE d.severityTier = "MCC" RETURN count(ic) as mccClaims',
     ],
-    ['metric_patient_acuity', 'metric_mcc_rate', 'upcoding',
+    ['metric_patient_acuity', 'metric_mcc_rate', SIGNAL_CATEGORY.UPCODING,
       'Does the patient mix justify the higher MCC rate, or is this a coding shift?',
       'MATCH (ic:InpatientClaim)-[:SUBMITTED_BY]->(p:Provider {id: $providerId}), (ic)-[:TREATED]->(b:Beneficiary), (ic)-[:CLASSIFIED_AS]->(d:DRG) WHERE d.severityTier = "MCC" RETURN count(DISTINCT b) as uniquePatients',
     ],
-    ['metric_readmission_rate', 'metric_length_of_stay', 'readmission',
+    ['metric_readmission_rate', 'metric_length_of_stay', SIGNAL_CATEGORY.READMISSION,
       'Is the high readmission rate due to quality issues (shorter stays) or patient acuity?',
       'MATCH (ic:InpatientClaim)-[:SUBMITTED_BY]->(p:Provider {id: $providerId}) RETURN avg(ic.utilizationDayCount) as avgLos',
     ],
-    ['metric_readmission_rate', 'metric_patient_acuity', 'readmission',
+    ['metric_readmission_rate', 'metric_patient_acuity', SIGNAL_CATEGORY.READMISSION,
       'Are patients at this provider sicker than peers, explaining the higher readmission rate?',
       'MATCH (ic:InpatientClaim)-[:SUBMITTED_BY]->(p:Provider {id: $providerId}), (ic)-[:TREATED]->(b:Beneficiary) RETURN count(DISTINCT b) as patients',
     ],
-    ['metric_er_visit_volume', 'metric_provider_peer_group', 'geographic_spike',
+    ['metric_er_visit_volume', 'metric_provider_peer_group', SIGNAL_CATEGORY.GEOGRAPHIC_SPIKE,
       'Is the ER volume spike explained by miscoding, a disease outbreak, or a new competing facility?',
       'MATCH (p:Provider)-[:LOCATED_IN]->(r:Region {name: $region}) MATCH (oc:OutpatientClaim)-[:SUBMITTED_BY]->(p) RETURN count(oc) as erVisits',
     ],
-    ['metric_er_visit_volume', 'metric_readmission_rate', 'geographic_spike',
+    ['metric_er_visit_volume', 'metric_readmission_rate', SIGNAL_CATEGORY.GEOGRAPHIC_SPIKE,
       'Could the ER volume spike be follow-ups from earlier inpatient stays (readmission cascade)?',
       'MATCH (p:Provider)-[:LOCATED_IN]->(r:Region {name: $region}) MATCH (ic:InpatientClaim)-[:SUBMITTED_BY]->(p) RETURN count(ic) as inpatientClaims',
     ],

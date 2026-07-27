@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@claims-analyst/shared": "workspace:*",
+    "@claims-analyst/data": "workspace:*",
     "kuzu": "^0.11.3"
   },
   "devDependencies": {
+    "tsx": "^4.23.1",
     "typescript": "^5.7.0",
     "vitest": "^4.1.10"
   }

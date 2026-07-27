@@ -1,4 +1,5 @@
 import type { Connection as KuzuConnection, QueryResult } from 'kuzu';
+import { SIGNAL_CATEGORY } from '@claims-analyst/shared';
 
 export function queryProviderSubgraph(
   conn: KuzuConnection,
@@ -37,7 +38,7 @@ export function queryUpcodingHypotheses(
 ): QueryResult | QueryResult[] {
   const stmt = conn.prepareSync(
     `MATCH (a:Metric)-[h:HYPOTHESIZES]->(b:Metric)
-     WHERE h.pattern = "upcoding"
+     WHERE h.pattern = "${SIGNAL_CATEGORY.UPCODING}"
      RETURN a.name, b.name, h.question, h.cypherQuery`,
   );
   return conn.executeSync(stmt);
@@ -48,7 +49,7 @@ export function queryReadmissionHypotheses(
 ): QueryResult | QueryResult[] {
   const stmt = conn.prepareSync(
     `MATCH (a:Metric)-[h:HYPOTHESIZES]->(b:Metric)
-     WHERE h.pattern = "readmission"
+     WHERE h.pattern = "${SIGNAL_CATEGORY.READMISSION}"
      RETURN a.name, b.name, h.question, h.cypherQuery`,
   );
   return conn.executeSync(stmt);
@@ -59,7 +60,7 @@ export function queryGeographicHypotheses(
 ): QueryResult | QueryResult[] {
   const stmt = conn.prepareSync(
     `MATCH (a:Metric)-[h:HYPOTHESIZES]->(b:Metric)
-     WHERE h.pattern = "geographic_spike"
+     WHERE h.pattern = "${SIGNAL_CATEGORY.GEOGRAPHIC_SPIKE}"
      RETURN a.name, b.name, h.question, h.cypherQuery`,
   );
   return conn.executeSync(stmt);
