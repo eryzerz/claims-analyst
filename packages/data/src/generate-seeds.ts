@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 // To regenerate: npx tsx src/generate-seeds.ts
 // Output: CSV files in ../seeds/
 
-const SEEDS_DIR = resolve(import.meta.dirname, '..', '..', 'seeds');
+const SEEDS_DIR = resolve(import.meta.dirname, '..', 'seeds');
 if (!existsSync(SEEDS_DIR)) mkdirSync(SEEDS_DIR, { recursive: true });
 
 function csvLine(fields: unknown[]): string {

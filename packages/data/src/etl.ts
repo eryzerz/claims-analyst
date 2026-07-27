@@ -1,5 +1,5 @@
 import { getDb, getRawDb, resetDb } from './db.js';
-import { ingestAll } from './ingest-csv.js';
+import { ingestAll } from './ingest-mock.js';
 import { storeBaselines } from './compute-baselines.js';
 
 export interface EtlResult {

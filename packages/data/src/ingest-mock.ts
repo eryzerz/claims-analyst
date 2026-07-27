@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { getDb } from './db.js';
 import { beneficiaries, providers, inpatientClaims, outpatientClaims, drgDefinitions } from './schema.js';
 
-const SEEDS_DIR = resolve(import.meta.dirname, '..', '..', 'seeds');
+const SEEDS_DIR = resolve(import.meta.dirname, '..', 'seeds');
 
 function parseCsv(content: string): { headers: string[]; rows: string[][] } {
   const lines = content.trim().split('\n');
