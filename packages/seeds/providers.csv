@@ -1,0 +1,6 @@
+id,name,state_code,teaching_hospital,bed_count
+"PROV_A","Metropolitan General","NY","true",400
+"PROV_B","Riverside Medical Center","NY","false",200
+"PROV_C","Valley Community Hospital","CA","true",350
+"PROV_D","Oakwood Regional","TX","false",150
+"PROV_E","Pineview Health","FL","false",180

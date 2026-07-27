@@ -1,0 +1,14 @@
+code,base_drg,mdc,medical_surgical,severity_tier,description,weight
+193,193,"04","medical","MCC","Simple Pneumonia & Pleurisy with MCC",1.45
+194,193,"04","medical","CC","Simple Pneumonia & Pleurisy with CC",1.02
+195,193,"04","medical","Non-CC","Simple Pneumonia & Pleurisy without CC/MCC",0.72
+280,280,"05","medical","MCC","Acute Myocardial Infarction, Discharged Alive with MCC",1.52
+281,280,"05","medical","CC","Acute Myocardial Infarction, Discharged Alive with CC",1.05
+282,280,"05","medical","Non-CC","Acute Myocardial Infarction, Discharged Alive without CC/MCC",0.77
+291,291,"05","medical","MCC","Heart Failure & Shock with MCC",1.38
+292,291,"05","medical","CC","Heart Failure & Shock with CC",1.01
+293,291,"05","medical","Non-CC","Heart Failure & Shock without CC/MCC",0.69
+470,470,"08","surgical","Non-CC","Major Joint Replacement without MCC",2.01
+469,470,"08","surgical","MCC","Major Joint Replacement with MCC",2.75
+871,871,"18","medical","MCC","Septicemia with MV >96 Hours",5.12
+872,871,"18","medical","Non-CC","Septicemia without MV >96 Hours with MCC",1.97
