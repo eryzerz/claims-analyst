@@ -1,11 +1,22 @@
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+declare var __dirname: string | undefined;
+
+function getSeedsDir(): string {
+  const base =
+    typeof __dirname !== 'undefined'
+      ? __dirname
+      : import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
+  return resolve(base, '..', 'seeds');
+}
 
 // Deterministic seed data generation for three fraud scenarios.
 // To regenerate: npx tsx src/generate-seeds.ts
 // Output: CSV files in ../seeds/
 
-const SEEDS_DIR = resolve(import.meta.dirname, '..', 'seeds');
+const SEEDS_DIR = getSeedsDir();
 if (!existsSync(SEEDS_DIR)) mkdirSync(SEEDS_DIR, { recursive: true });
 
 function csvLine(fields: unknown[]): string {

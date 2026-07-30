@@ -1,9 +1,20 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getDb } from './db.js';
 import { beneficiaries, providers, inpatientClaims, outpatientClaims, drgDefinitions } from './schema.js';
 
-const SEEDS_DIR = resolve(import.meta.dirname, '..', 'seeds');
+declare var __dirname: string | undefined;
+
+function getSeedsDir(): string {
+  const base =
+    typeof __dirname !== 'undefined'
+      ? __dirname
+      : import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
+  return resolve(base, '..', 'seeds');
+}
+
+const SEEDS_DIR = getSeedsDir();
 
 function parseCsv(content: string): { headers: string[]; rows: string[][] } {
   const lines = content.trim().split('\n');
