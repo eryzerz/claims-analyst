@@ -7,11 +7,19 @@ import { beneficiaries, providers, inpatientClaims, outpatientClaims, drgDefinit
 declare var __dirname: string | undefined;
 
 function getSeedsDir(): string {
-  const base =
-    typeof __dirname !== 'undefined'
-      ? __dirname
-      : import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
-  return resolve(base, '..', 'seeds');
+  // Webpack/Next.js bundling: __dirname points to .next/server output dir.
+  // Resolve from cwd using monorepo sibling-package convention instead.
+  if (typeof __dirname !== 'undefined' && __dirname.includes('.next')) {
+    return resolve(process.cwd(), '..', 'data', 'seeds');
+  }
+
+  // Native ESM (tsx, node, vitest): import.meta.dirname is the source dir
+  if (typeof import.meta.dirname === 'string') {
+    return resolve(import.meta.dirname, '..', 'seeds');
+  }
+
+  // ESM __dirname via fileURLToPath (older Node, some bundlers)
+  return resolve(dirname(fileURLToPath(import.meta.url)), '..', 'seeds');
 }
 
 const SEEDS_DIR = getSeedsDir();

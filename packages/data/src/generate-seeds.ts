@@ -5,11 +5,13 @@ import { fileURLToPath } from 'node:url';
 declare var __dirname: string | undefined;
 
 function getSeedsDir(): string {
-  const base =
-    typeof __dirname !== 'undefined'
-      ? __dirname
-      : import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
-  return resolve(base, '..', 'seeds');
+  if (typeof __dirname !== 'undefined' && __dirname.includes('.next')) {
+    return resolve(process.cwd(), '..', 'data', 'seeds');
+  }
+  if (typeof import.meta.dirname === 'string') {
+    return resolve(import.meta.dirname, '..', 'seeds');
+  }
+  return resolve(dirname(fileURLToPath(import.meta.url)), '..', 'seeds');
 }
 
 // Deterministic seed data generation for three fraud scenarios.
