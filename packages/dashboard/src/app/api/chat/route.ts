@@ -5,9 +5,13 @@ const aiProvider = createOpenAICompatible({
   name: 'openrouter',
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY || '',
+  headers: {
+    'HTTP-Referer': 'http://localhost:3001',
+    'X-Title': 'Claims Analyst',
+  },
 });
 
-const model = aiProvider(process.env.AI_MODEL || 'deepseek/deepseek-v4-flash-0731');
+const model = aiProvider(process.env.AI_MODEL || 'deepseek/deepseek-v4-flash');
 
 function normalizeMessages(
   msgs: Array<{ role: string; content: string }>,
@@ -51,6 +55,15 @@ Respond concisely and factually. Reference specific evidence when possible.`
       : 'You are a healthcare fraud investigation assistant. Help the auditor understand and investigate findings from the Claims Analyst system.';
 
     const normalized = normalizeMessages(messages ?? []);
+
+    if (!process.env.OPENROUTER_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'OPENROUTER_API_KEY not set' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    console.log('[chat]', `msgs=${normalized.length}`, `ctx=${findingContext?.title ?? 'none'}`);
 
     const result = streamText({
       model,
