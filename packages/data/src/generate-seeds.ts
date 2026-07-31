@@ -210,6 +210,37 @@ for (const benId of readmitBeneficiaries) {
   ]);
 }
 
+// ── Baseline readmissions for PROV_A (for non-zero peer mean) ──
+// Add 1 readmission per readmitBeneficiary at PROV_A (lower rate than PROV_D)
+for (const benId of ['BEN00001', 'BEN00002']) {
+  const existingClaims = inpatientRows.filter(
+    (r) => r[1] === benId && r[2] === 'PROV_A',
+  );
+  if (existingClaims.length < 1) continue;
+
+  const firstClaim = existingClaims[0]!;
+  const firstDischarge = new Date(firstClaim[6] as string);
+  const readmitDate = new Date(firstDischarge.getTime() + 25 * 86400000); // readmit 25 days later
+  const readmitDischarge = new Date(readmitDate.getTime() + 4 * 86400000);
+
+  claimId++;
+  inpatientRows.push([
+    `IP${String(claimId).padStart(6, '0')}`,
+    benId,
+    'PROV_A',
+    readmitDate.toISOString().split('T')[0]!,
+    readmitDischarge.toISOString().split('T')[0]!,
+    readmitDate.toISOString().split('T')[0]!,
+    readmitDischarge.toISOString().split('T')[0]!,
+    195, // Simple pneumonia
+    (0.72 * 6200).toFixed(2),
+    4,
+    '486',
+    '["486"]',
+    '[]',
+  ]);
+}
+
 writeCsv('inpatient_claims.csv', [
   'id','beneficiary_id','provider_id','claim_start_date','claim_end_date',
   'admission_date','discharge_date','drg_code','payment_amount','utilization_day_count',
@@ -221,7 +252,7 @@ const outpatientRows: unknown[][] = [];
 let opId = 0;
 const opProviders = ['PROV_A','PROV_B','PROV_C','PROV_D','PROV_E'];
 // PROV_E (FL) has the highest outpatient volume for geographic spike
-const opWeights = [1, 1, 1, 1, 8]; // PROV_E spikes
+const opWeights = [1, 1, 1, 1, 15]; // PROV_E spikes dramatically
 
 for (let pi = 0; pi < opProviders.length; pi++) {
   const count = opWeights[pi]! * 25;
@@ -229,8 +260,12 @@ for (let pi = 0; pi < opProviders.length; pi++) {
     opId++;
     const benId = `BEN${String((pi * 25 + c) % 100 + 1).padStart(5, '0')}`;
     const baseDate = new Date(2009, 0, 1);
-    const svcDate = new Date(baseDate.getTime() + (pi * 90 + c * 2) * 86400000);
-    // ER visit spike: PROV_E in weeks 20-24 has extra volume
+    // PROV_E: concentrate spike in weeks 20-28 of 2009 with tight spacing
+    const dateOffset = opProviders[pi] === 'PROV_E'
+      ? (140 + c * 0.3)  // spike concentrated in May-July 2009
+      : (pi * 90 + c * 2);
+    const svcDate = new Date(baseDate.getTime() + dateOffset * 86400000);
+    // ER visit spike: PROV_E has extra volume in concentrated window
     const isEr = opProviders[pi] === 'PROV_E' ? true : (c % 3 === 0);
     const diagCode = isEr ? '78900' : '4019';
 

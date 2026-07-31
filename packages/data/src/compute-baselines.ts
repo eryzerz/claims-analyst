@@ -236,7 +236,9 @@ export function computeRegionBaselines(): RegionWeekBaseline[] {
     if (!providerRegion.has(p.id)) providerRegion.set(p.id, getRegion(p.stateCode));
   }
 
-  const filtered = visits.filter((v) => providerRegion.has(v.providerId));
+  const filtered = visits
+    .filter((v) => providerRegion.has(v.providerId))
+    .sort((a, b) => new Date(a.claimStartDate).getTime() - new Date(b.claimStartDate).getTime());
   if (filtered.length === 0) return [];
 
   // Build pond-ts TimeSeries indexed by claim timestamps

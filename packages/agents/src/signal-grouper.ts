@@ -1,4 +1,4 @@
-import { Signal, SignalCluster } from '@claims-analyst/shared';
+import { Signal, SignalCluster, SIGNAL_CATEGORY } from '@claims-analyst/shared';
 
 interface GrouperConfig {
   drgBaseMap: Map<number, number>;
@@ -8,8 +8,20 @@ export function groupSignals(signals: Signal[], config: GrouperConfig): SignalCl
   const clusters = new Map<string, Signal[]>();
 
   for (const signal of signals) {
-    const baseDrg = signal.metrics.zScore ? getBaseDrgForSignal(signal, config) : 0;
-    const key = `${signal.providerId}__${baseDrg}__${signal.category}`;
+    let key: string;
+
+    if (signal.category === SIGNAL_CATEGORY.GEOGRAPHIC_SPIKE) {
+      const region = (signal.context as { region?: string })?.region ?? signal.providerId;
+      key = `geo__${region}`;
+    } else if (signal.category === SIGNAL_CATEGORY.READMISSION) {
+      key = `readmit__${signal.providerId}`;
+    } else {
+      const drgCode = (signal.context as { drgCode?: number })?.drgCode;
+      const baseDrg = drgCode && config.drgBaseMap.has(drgCode)
+        ? config.drgBaseMap.get(drgCode)!
+        : (drgCode ?? 0);
+      key = `${signal.providerId}__${baseDrg}__${signal.category}`;
+    }
 
     if (!clusters.has(key)) clusters.set(key, []);
     clusters.get(key)!.push(signal);
@@ -20,27 +32,16 @@ export function groupSignals(signals: Signal[], config: GrouperConfig): SignalCl
 
   for (const [, sigs] of clusters) {
     idx++;
+    const first = sigs[0]!;
     results.push({
       id: `cluster_${String(idx).padStart(3, '0')}`,
       signals: sigs,
-      primaryProviderId: sigs[0]!.providerId,
-      primaryDrgCode: extractDrgCode(sigs[0]!),
-      clusterRationale: `Grouped ${sigs.length} signals from provider ${sigs[0]!.providerId} (category: ${sigs[0]!.category})`,
+      primaryProviderId: first.providerId,
+      primaryDrgCode: (first.context as { drgCode?: number })?.drgCode,
+      primaryRegion: (first.context as { region?: string })?.region,
+      clusterRationale: `Grouped ${sigs.length} ${first.category} signals for ${first.providerId}`,
     });
   }
 
   return results;
-}
-
-function getBaseDrgForSignal(signal: Signal, config: GrouperConfig): number {
-  const drg = extractDrgCode(signal);
-  if (drg && config.drgBaseMap.has(drg)) {
-    return config.drgBaseMap.get(drg)!;
-  }
-  return drg ?? 0;
-}
-
-function extractDrgCode(signal: Signal): number | undefined {
-  const match = signal.id.match(/signal_.+?_(\d+)$/);
-  return match ? parseInt(match[1]!, 10) : undefined;
 }

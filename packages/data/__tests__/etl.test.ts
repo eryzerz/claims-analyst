@@ -27,13 +27,13 @@ describe('ETL pipeline', () => {
   it('ingests inpatient claims', () => {
     const db = getDb();
     const rows = db.all<{ count: number }>('SELECT COUNT(*) as count FROM inpatient_claims');
-    expect(rows[0]!.count).toBe(210);
+    expect(rows[0]!.count).toBe(212);
   });
 
   it('ingests outpatient claims', () => {
     const db = getDb();
     const rows = db.all<{ count: number }>('SELECT COUNT(*) as count FROM outpatient_claims');
-    expect(rows[0]!.count).toBe(300);
+    expect(rows[0]!.count).toBe(475);
   });
 
   it('computes provider baselines', () => {
