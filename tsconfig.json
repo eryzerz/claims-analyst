@@ -3,8 +3,7 @@
     { "path": "packages/shared" },
     { "path": "packages/data" },
     { "path": "packages/graph" },
-    { "path": "packages/agents" },
-    { "path": "packages/dashboard" }
+    { "path": "packages/agents" }
   ],
   "files": []
 }
