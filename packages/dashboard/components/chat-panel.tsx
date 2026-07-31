@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import type { FindingCard } from '@/lib/types';
 
 interface ChatMessage {
@@ -134,10 +135,14 @@ export default function ChatPanel({ findings = [], selectedFindingId = null }: P
               className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
                 msg.role === 'user'
                   ? 'bg-accent text-accent-foreground'
-                  : 'bg-muted text-foreground'
+                  : 'bg-muted text-foreground prose prose-sm prose-invert max-w-none'
               }`}
             >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              {msg.role === 'user' ? (
+                <p className="whitespace-pre-wrap">{msg.content}</p>
+              ) : (
+                <ReactMarkdown>{msg.content}</ReactMarkdown>
+              )}
             </div>
           </div>
         ))}
