@@ -1,21 +1,51 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import type { FindingCard } from '@/lib/types';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-export default function ChatPanel({ findingTitle }: { findingTitle?: string }) {
+interface Props {
+  findings?: FindingCard[];
+  selectedFindingId?: string | null;
+}
+
+export default function ChatPanel({ findings = [], selectedFindingId = null }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // When a finding is selected, focus the input
+  useEffect(() => {
+    if (selectedFindingId) {
+      inputRef.current?.focus();
+    }
+  }, [selectedFindingId]);
+
+  const selectedFinding = selectedFindingId
+    ? findings.find((f) => f.id === selectedFindingId)
+    : null;
+
+  const buildGlobalSummaries = (cards: FindingCard[]): string => {
+    const capped = cards.slice(0, 10);
+    return capped
+      .map((c) => {
+        const sev = c.severity.toUpperCase();
+        const prefix = sev === 'CRITICAL' ? `[CRITICAL] ` : sev === 'HIGH' ? `[HIGH] ` : '';
+        return `${prefix}${c.title}: ${c.summary.slice(0, 100)}`;
+      })
+      .join('\n') +
+      (cards.length > 10 ? `\n\n...and ${cards.length - 10} more findings. Filter or select a specific card for details.` : '');
+  };
 
   async function send() {
     if (!input.trim() || loading) return;
@@ -24,11 +54,15 @@ export default function ChatPanel({ findingTitle }: { findingTitle?: string }) {
     setInput('');
     setLoading(true);
 
+    const context = selectedFinding
+      ? { mode: 'finding' as const, finding: selectedFinding }
+      : { mode: 'global' as const, summaries: buildGlobalSummaries(findings) };
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMsg] }),
+        body: JSON.stringify({ messages: [...messages, userMsg], context }),
       });
       const data = (await res.json()) as ChatMessage;
       setMessages((prev) => [...prev, data]);
@@ -43,24 +77,51 @@ export default function ChatPanel({ findingTitle }: { findingTitle?: string }) {
   }
 
   return (
-    <div className="border border-border rounded-lg bg-card overflow-hidden">
+    <div className="border border-border rounded-lg bg-card overflow-hidden" id="chat-panel">
       <div className="px-4 py-3 border-b border-border">
         <h3 className="text-sm font-medium">
-          Ask about findings
-          {findingTitle && (
-            <span className="text-muted-foreground font-normal"> — following up on this investigation</span>
+          {selectedFinding ? (
+            <>Ask about <span className="text-accent">{selectedFinding.title}</span></>
+          ) : (
+            'Ask about findings'
+          )}
+          {!selectedFinding && findings.length > 0 && (
+            <span className="text-muted-foreground font-normal"> — {findings.length} in view</span>
           )}
         </h3>
+        {selectedFinding && (
+          <button
+            onClick={() => {
+              // Clear selection — reset to global mode
+              window.location.hash = 'chat-panel';
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground mt-1"
+          >
+            ← Switch to global view
+          </button>
+        )}
       </div>
 
-      <div className="h-64 overflow-y-auto p-4 space-y-3">
+      <div className="h-72 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-xs text-muted-foreground text-center py-8">
-            Ask follow-up questions about the detected signals. Try:
-            <br />
-            <span className="italic">"What are the next actions?"</span>
-            {' or '}
-            <span className="italic">"Tell me about PROV_B"</span>
+          <div className="text-xs text-muted-foreground text-center py-12 space-y-2">
+            {selectedFinding ? (
+              <>
+                <p>You are asking about a specific finding.</p>
+                <p className="italic">Try: "What are the hypotheses?" or "What's the evidence?"</p>
+              </>
+            ) : (
+              <>
+                {findings.length > 0 ? (
+                  <>
+                    <p>{findings.length} findings loaded as context.</p>
+                    <p className="italic">Try: "What are the critical findings?" or "Show me recommendations"</p>
+                  </>
+                ) : (
+                  <p>No findings available. Run the pipeline to generate results.</p>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -94,11 +155,16 @@ export default function ChatPanel({ findingTitle }: { findingTitle?: string }) {
 
       <div className="border-t border-border p-3 flex gap-2">
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
-          placeholder="Ask a follow-up question..."
+          placeholder={
+            selectedFinding
+              ? 'Ask about this finding...'
+              : 'Ask about all findings...'
+          }
           className="flex-1 bg-muted border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
         />
         <button

@@ -1,21 +1,15 @@
+'use client';
+
+import { useState } from 'react';
 import FindingsDashboard from '@/components/findings-dashboard';
 import ChatPanel from '@/components/chat-panel';
+import type { FindingCard } from '@/lib/types';
 
-async function getFindings() {
-  try {
-    // In production, this would call the API endpoint or import the pipeline directly.
-    // For now, use inline data matching the exact output of runPipeline().
-    return findingsData;
-  } catch {
-    return [];
-  }
-}
-
-const findingsData = [
+const findingsData: FindingCard[] = [
   {
     id: 'finding_cluster_001',
     signalClusterId: 'cluster_001',
-    severity: 'critical' as const,
+    severity: 'critical',
     title: 'Upcoding Risk: Provider PROV_B — 3 DRG anomalies detected',
     summary: 'Provider PROV_B shows 3 DRG coding anomalies with significant deviation from peer mean. Agent tested 2 hypotheses with 85% average confidence. Multiple DRGs affected, suggesting systematic coding shift.',
     hypotheses: [
@@ -46,7 +40,7 @@ const findingsData = [
   {
     id: 'finding_cluster_002',
     signalClusterId: 'cluster_002',
-    severity: 'critical' as const,
+    severity: 'critical',
     title: 'Readmission Spiral: Provider PROV_D — elevated 30-day readmission rate',
     summary: 'Provider PROV_D has 30-day readmission rate of 8.3% vs peer mean of 1.3% (z = 2.83). Agent tested 2 hypotheses (quality, acuity, follow-up gap) with 73% average confidence.',
     hypotheses: [
@@ -77,7 +71,7 @@ const findingsData = [
   {
     id: 'finding_cluster_003',
     signalClusterId: 'cluster_003',
-    severity: 'medium' as const,
+    severity: 'medium',
     title: 'Geographic Spike: South — 1 ER volume anomalies detected',
     summary: 'South region shows ER visit volume spike (WoW change 200.0%, z = 2.00). Agent tested 2 hypotheses (miscoding, outbreak, new facility) with 40% average confidence.',
     hypotheses: [
@@ -107,13 +101,21 @@ const findingsData = [
   },
 ];
 
-export default async function Home() {
-  const findings = await getFindings();
+export default function Home() {
+  const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
+
   return (
     <>
-      <FindingsDashboard findings={findings} />
+      <FindingsDashboard
+        findings={findingsData}
+        selectedFindingId={selectedFindingId}
+        onSelectFinding={setSelectedFindingId}
+      />
       <div className="max-w-4xl mx-auto px-6 pb-12">
-        <ChatPanel />
+        <ChatPanel
+          findings={findingsData}
+          selectedFindingId={selectedFindingId}
+        />
       </div>
     </>
   );

@@ -1,30 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-
-interface Hypothesis {
-  id: string;
-  hypothesis: string;
-  question: string;
-  score: number;
-  rationale: string;
-  evidenceQueries: string[];
-}
-
-interface FindingCard {
-  id: string;
-  signalClusterId: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  title: string;
-  summary: string;
-  hypotheses: Hypothesis[];
-  recommendation: string;
-  evidencePath: {
-    signals: string[];
-    graphEdgesTraversed: string[];
-    dataQueriesRun: string[];
-  };
-}
+import type { FindingCard } from '@/lib/types';
 
 const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
 const severityColors: Record<string, string> = {
@@ -40,9 +17,14 @@ const severityDots: Record<string, string> = {
   low: 'bg-slate-500',
 };
 
-export default function FindingsDashboard({ findings }: { findings: FindingCard[] }) {
+interface Props {
+  findings: FindingCard[];
+  selectedFindingId: string | null;
+  onSelectFinding: (id: string | null) => void;
+}
+
+export default function FindingsDashboard({ findings, selectedFindingId, onSelectFinding }: Props) {
   const [filter, setFilter] = useState<string>('all');
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     let result = findings;
@@ -90,14 +72,14 @@ export default function FindingsDashboard({ findings }: { findings: FindingCard[
       ) : (
         <div className="space-y-3">
           {filtered.map((card) => {
-            const isExpanded = expandedCard === card.id;
+            const isExpanded = selectedFindingId === card.id;
             return (
               <article
                 key={card.id}
                 className="border border-border rounded-lg bg-card overflow-hidden transition-shadow hover:shadow-sm"
               >
                 <button
-                  onClick={() => setExpandedCard(isExpanded ? null : card.id)}
+                  onClick={() => onSelectFinding(isExpanded ? null : card.id)}
                   className="w-full text-left p-4 flex items-start gap-3"
                 >
                   <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${severityDots[card.severity]}`} />
@@ -124,9 +106,20 @@ export default function FindingsDashboard({ findings }: { findings: FindingCard[
                 {isExpanded && (
                   <div className="border-t border-border px-4 py-4 space-y-4 bg-muted/30">
                     <div>
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                        Hypotheses ({card.hypotheses.length})
-                      </h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Hypotheses ({card.hypotheses.length})
+                        </h4>
+                        <button
+                          onClick={() => {
+                            onSelectFinding(card.id);
+                            document.getElementById('chat-panel')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors"
+                        >
+                          Ask about this in chat →
+                        </button>
+                      </div>
                       <div className="space-y-2">
                         {card.hypotheses.map((hyp) => (
                           <div key={hyp.id} className="border border-border rounded-md p-3 bg-card">
