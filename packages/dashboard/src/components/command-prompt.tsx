@@ -63,21 +63,20 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
         >
           &gt;
         </span>
-        <span
-          className="font-mono text-xs cursor-pointer"
+        <button
+          type="button"
+          className="font-mono text-xs cursor-pointer bg-transparent border-none hover:text-[#aaaaaa]"
           style={{ color: 'var(--text-muted)' }}
           onClick={() => {
             setExpanded(true);
             setTimeout(() => inputRef.current?.focus(), 50);
           }}
-          role="button"
-          tabIndex={0}
         >
           Ask about this finding...
           <span className="ml-4" style={{ color: 'var(--border-2)' }}>
             /
           </span>
-        </span>
+        </button>
       </div>
     );
   }
@@ -89,6 +88,9 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
     >
       {messages.length > 0 && (
         <div
+          role="log"
+          aria-live="polite"
+          aria-label="Chat messages"
           className="max-h-[200px] overflow-y-auto px-4 py-2"
           style={{ background: 'var(--ground)' }}
         >
@@ -120,7 +122,7 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
             </div>
           ))}
           {isLoading && (
-            <div className="mb-2">
+            <div role="status" aria-live="polite" className="mb-2">
               <span
                 className="text-[10px] uppercase tracking-wider block mb-0.5"
                 style={{ color: 'var(--severity-low)' }}
@@ -130,6 +132,7 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
               <span
                 className="text-xs animate-pulse"
                 style={{ color: 'var(--text-muted)' }}
+                aria-label="Agent is responding"
               >
                 ...
               </span>
@@ -139,13 +142,18 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
       )}
 
       <form onSubmit={handleSubmit} className="flex items-center px-4 h-[32px]">
+        <label htmlFor="chat-input" className="sr-only">
+          Ask the agent
+        </label>
         <span
+          aria-hidden
           className="font-mono text-xs flex-shrink-0"
           style={{ color: 'var(--accent)', marginRight: '8px' }}
         >
           &gt;
         </span>
         <input
+          id="chat-input"
           ref={inputRef}
           type="text"
           value={input}
@@ -164,8 +172,9 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
         />
         <button
           type="button"
+          aria-label="Close chat"
           onClick={() => setExpanded(false)}
-          className="font-mono text-xs ml-2 cursor-pointer bg-transparent border-none"
+          className="font-mono text-xs ml-2 cursor-pointer bg-transparent border-none hover:text-[#aaaaaa]"
           style={{ color: 'var(--text-muted)' }}
         >
           Esc

@@ -5,11 +5,18 @@ import { getFilteredAndSorted } from '../lib/filters';
 interface SignalFeedProps {
   findings: FindingCard[];
   selectedId: string | null;
+  focusedIndex: number;
   onSelect: (id: string) => void;
   activeFilters: SignalCategory[];
 }
 
-export function SignalFeed({ findings, selectedId, onSelect, activeFilters }: SignalFeedProps) {
+export function SignalFeed({
+  findings,
+  selectedId,
+  focusedIndex,
+  onSelect,
+  activeFilters,
+}: SignalFeedProps) {
   const sorted = getFilteredAndSorted(findings, activeFilters);
 
   if (sorted.length === 0) {
@@ -17,6 +24,7 @@ export function SignalFeed({ findings, selectedId, onSelect, activeFilters }: Si
     return (
       <div
         className="flex items-center justify-center h-full"
+        role="status"
         style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
       >
         <div className="text-center">
@@ -30,8 +38,15 @@ export function SignalFeed({ findings, selectedId, onSelect, activeFilters }: Si
   }
 
   return (
-    <div className="overflow-y-auto h-full" role="grid" style={{ fontFamily: "'JetBrains Mono', 'Fira Code', ui-monospace, monospace" }}>
+    <div
+      role="listbox"
+      aria-label="Finding signals list"
+      aria-activedescendant={selectedId ? `finding-${selectedId}` : undefined}
+      className="overflow-y-auto h-full"
+      style={{ fontFamily: "'JetBrains Mono', 'Fira Code', ui-monospace, monospace" }}
+    >
       <div
+        aria-hidden
         className="grid px-2 text-[10px] uppercase tracking-wider select-none"
         style={{
           gridTemplateColumns: '32px 6px 140px 40px 1fr auto',
@@ -56,6 +71,7 @@ export function SignalFeed({ findings, selectedId, onSelect, activeFilters }: Si
           key={f.id}
           finding={f}
           isSelected={f.id === selectedId}
+          isFocused={i === focusedIndex}
           onClick={() => onSelect(f.id)}
           index={i}
         />

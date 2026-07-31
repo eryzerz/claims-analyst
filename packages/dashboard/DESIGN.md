@@ -20,7 +20,7 @@ Dark monitoring room on a large display — the ground is near-black, the text i
 | `--border-2` | `#262626` | Visible borders |
 | `--text-primary` | `#e6e6e6` | Primary content |
 | `--text-secondary` | `#999999` | Supporting text |
-| `--text-muted` | `#666666` | Disabled/placeholder |
+| `--text-muted` | `#888888` | Disabled/placeholder |
 | `--severity-critical` | `#ff4444` | Critical finding |
 | `--severity-high` | `#ff8800` | High finding |
 | `--severity-medium` | `#ffcc00` | Medium finding |

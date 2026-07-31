@@ -11,7 +11,7 @@
   --border-2: #262626;
   --text-primary: #e6e6e6;
   --text-secondary: #999999;
-  --text-muted: #666666;
+  --text-muted: #888888;
   --severity-critical: #ff4444;
   --severity-high: #ff8800;
   --severity-medium: #ffcc00;
@@ -57,4 +57,44 @@ body {
 ::selection {
   background: var(--accent-dim);
   color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  text-decoration: none;
+  transform: translateY(-100%);
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }

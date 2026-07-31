@@ -48,6 +48,11 @@ export function HypothesisMatrix({ hypotheses }: HypothesisMatrixProps) {
 
             <div
               className="w-full h-[4px] mb-2"
+              role="progressbar"
+              aria-valuenow={Math.round(h.score * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Confidence score: ${scoreBar(h.score)}`}
               style={{ background: 'var(--border-1)', borderRadius: '2px' }}
             >
               <div

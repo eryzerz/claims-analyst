@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { SignalCategory } from '@claims-analyst/shared';
 import { StatusBar } from './status-bar';
 import { SignalFeed } from './signal-feed';
@@ -10,9 +10,16 @@ import type { DashboardData } from '../lib/data';
 import { getFilteredAndSorted } from '../lib/filters';
 import { ALL_CATEGORIES } from '../lib/severity';
 
+function isInputFocused(): boolean {
+  const tag = document.activeElement?.tagName?.toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select';
+}
+
 export function DashboardShell({ data }: { data: DashboardData }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<SignalCategory[]>([...ALL_CATEGORIES]);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const feedRef = useRef<HTMLDivElement>(null);
 
   const selectedFinding = selectedId
     ? data.findingCards.find((f) => f.id === selectedId) ?? null
@@ -30,13 +37,30 @@ export function DashboardShell({ data }: { data: DashboardData }) {
 
   const navigateFindings = useCallback(
     (direction: 'up' | 'down') => {
-      setSelectedId((current) => {
-        const sorted = getFilteredAndSorted(data.findingCards, activeFilters);
-        const idx = sorted.findIndex((f) => f.id === current);
+      if (isInputFocused()) return;
+      const sorted = getFilteredAndSorted(data.findingCards, activeFilters);
+      if (sorted.length === 0) return;
+
+      setFocusedIndex((prev) => {
         if (direction === 'down') {
-          return idx < sorted.length - 1 ? sorted[idx + 1]!.id : current;
+          return prev < sorted.length - 1 ? prev + 1 : prev;
         }
-        return idx > 0 ? sorted[idx - 1]!.id : current;
+        return prev > 0 ? prev - 1 : prev;
+      });
+
+      setSelectedId((current) => {
+        const idx = sorted.findIndex((f) => f.id === current);
+        const nextIdx = direction === 'down'
+          ? Math.min(idx + 1, sorted.length - 1)
+          : Math.max(idx - 1, 0);
+        const nextId = sorted[nextIdx]!.id;
+
+        requestAnimationFrame(() => {
+          const el = document.getElementById(`finding-${nextId}`);
+          el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+
+        return nextId;
       });
     },
     [data.findingCards, activeFilters],
@@ -44,6 +68,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputFocused()) return;
       if (e.key === 'j') {
         e.preventDefault();
         navigateFindings('down');
@@ -75,14 +100,15 @@ export function DashboardShell({ data }: { data: DashboardData }) {
       />
 
       <div className="flex-1 flex min-h-0">
-        <div className="flex-1 min-w-0" style={{ width: '70%' }}>
+        <main id="main-content" className="flex-1 min-w-0" style={{ width: '70%' }}>
           <SignalFeed
             findings={data.findingCards}
             selectedId={selectedId}
+            focusedIndex={focusedIndex}
             onSelect={setSelectedId}
             activeFilters={activeFilters}
           />
-        </div>
+        </main>
 
         <InvestigationPanel
           finding={selectedFinding}

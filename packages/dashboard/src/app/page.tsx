@@ -16,7 +16,8 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div
+      <main
+        role="alert"
         className="h-full flex items-center justify-center p-8"
         style={{
           background: 'var(--ground)',
@@ -34,13 +35,14 @@ export default function DashboardPage() {
             Verify pipeline: pnpm -C packages/agents exec tsx src/run-pipeline.ts
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (!data || data.findingCards.length === 0) {
     return (
-      <div
+      <main
+        role="status"
         className="h-full flex items-center justify-center p-8"
         style={{
           background: 'var(--ground)',
@@ -55,7 +57,7 @@ export default function DashboardPage() {
             Pipeline status: idle. Run the pipeline to generate findings.
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 

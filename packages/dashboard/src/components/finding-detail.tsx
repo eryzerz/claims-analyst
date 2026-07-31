@@ -40,12 +40,12 @@ export function FindingDetail({ finding }: FindingDetailProps) {
       </div>
 
       <div className="p-4">
-        <div
-          className="text-[10px] uppercase tracking-wider mb-2"
+        <h3
+          className="text-[10px] uppercase tracking-wider mb-2 font-normal"
           style={{ color: 'var(--text-muted)' }}
         >
           Summary
-        </div>
+        </h3>
         <p
           className="text-xs leading-relaxed mb-4"
           style={{ color: 'var(--text-secondary)', fontFamily: 'system-ui, sans-serif' }}
@@ -53,28 +53,28 @@ export function FindingDetail({ finding }: FindingDetailProps) {
           {finding.summary}
         </p>
 
-        <div
-          className="text-[10px] uppercase tracking-wider mb-2"
+        <h3
+          className="text-[10px] uppercase tracking-wider mb-2 font-normal"
           style={{ color: 'var(--text-muted)' }}
         >
           Hypotheses ({finding.hypotheses.length})
-        </div>
+        </h3>
         <HypothesisMatrix hypotheses={finding.hypotheses} />
 
-        <div
-          className="text-[10px] uppercase tracking-wider mb-2 mt-4"
+        <h3
+          className="text-[10px] uppercase tracking-wider mb-2 mt-4 font-normal"
           style={{ color: 'var(--text-muted)' }}
         >
           Evidence Path
-        </div>
+        </h3>
         <EvidenceTrail evidencePath={finding.evidencePath} />
 
-        <div
-          className="text-[10px] uppercase tracking-wider mb-2 mt-4"
+        <h3
+          className="text-[10px] uppercase tracking-wider mb-2 mt-4 font-normal"
           style={{ color: 'var(--text-muted)' }}
         >
           Recommendation
-        </div>
+        </h3>
         <div
           className="p-3 text-xs leading-relaxed"
           style={{

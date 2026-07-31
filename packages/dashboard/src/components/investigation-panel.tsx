@@ -16,6 +16,7 @@ export function InvestigationPanel({
 }: InvestigationPanelProps) {
   return (
     <aside
+      aria-label="Investigation panel"
       className="h-full overflow-y-auto flex-shrink-0"
       style={{
         width: '30%',

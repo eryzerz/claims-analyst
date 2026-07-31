@@ -8,6 +8,12 @@ interface StatusBarProps {
   onToggleFilter: (category: SignalCategory) => void;
 }
 
+const CATEGORY_ARIA_LABELS: Record<SignalCategory, string> = {
+  upcoding: 'Filter by upcoding',
+  readmission: 'Filter by readmission',
+  geographic_spike: 'Filter by geographic spikes',
+};
+
 export function StatusBar({
   signalCount,
   clusterCount,
@@ -20,13 +26,13 @@ export function StatusBar({
       style={{ borderColor: 'var(--border-1)', background: 'var(--surface-1)' }}
     >
       <div className="flex items-center gap-3">
-        <span
+        <h1
           className="font-mono text-xs tracking-wider uppercase"
           style={{ color: 'var(--text-secondary)' }}
         >
           Claims Analyst
-        </span>
-        <span className="font-mono text-xs" style={{ color: 'var(--border-2)' }}>
+        </h1>
+        <span aria-hidden className="font-mono text-xs" style={{ color: 'var(--border-2)' }}>
           |
         </span>
         <div className="flex items-center gap-2">
@@ -37,8 +43,10 @@ export function StatusBar({
               <button
                 key={cat}
                 type="button"
+                aria-pressed={active}
+                aria-label={CATEGORY_ARIA_LABELS[cat]}
                 onClick={() => onToggleFilter(cat)}
-                className="font-mono text-[11px] px-2 py-0.5 transition-colors cursor-pointer"
+                className="font-mono text-[11px] px-2 py-[3px] transition-colors cursor-pointer hover:brightness-125"
                 style={{
                   background: active ? style.bg : 'transparent',
                   border: `1px solid ${active ? style.border : 'var(--border-1)'}`,
@@ -62,7 +70,7 @@ export function StatusBar({
             {signalCount}
           </span>
         </div>
-        <span style={{ color: 'var(--border-2)' }}>|</span>
+        <span aria-hidden style={{ color: 'var(--border-2)' }}>|</span>
         <div className="flex items-center gap-1">
           <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
             CLU
@@ -71,7 +79,7 @@ export function StatusBar({
             {clusterCount}
           </span>
         </div>
-        <span style={{ color: 'var(--border-2)' }}>|</span>
+        <span aria-hidden style={{ color: 'var(--border-2)' }}>|</span>
         <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
           {new Date().toLocaleTimeString('en-US', { hour12: false })}
         </span>
