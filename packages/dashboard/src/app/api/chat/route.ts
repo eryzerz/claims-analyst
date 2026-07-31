@@ -2,12 +2,12 @@ import { streamText } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 const aiProvider = createOpenAICompatible({
-  name: 'claims-analyst',
-  baseURL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1',
-  apiKey: process.env.OPENAI_API_KEY || 'ollama',
+  name: 'openrouter',
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY || '',
 });
 
-const model = aiProvider(process.env.AI_MODEL || 'qwen2.5');
+const model = aiProvider(process.env.AI_MODEL || 'deepseek/deepseek-v4-flash-0731');
 
 function normalizeMessages(
   msgs: Array<{ role: string; content: string }>,
