@@ -3,6 +3,9 @@ dist/
 .next/
 .turbo/
 *.tsbuildinfo
+.env
+.env.local
+.env.*.local
 
 # domain learning related docs
 learning-records/
