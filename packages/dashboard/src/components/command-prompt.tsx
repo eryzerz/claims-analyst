@@ -171,7 +171,7 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
               )}
             </div>
           ))}
-          {isLoading && (
+          {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
             <div role="status" aria-live="polite" className="mb-2">
               <span
                 className="text-[10px] uppercase tracking-wider block mb-0.5"
