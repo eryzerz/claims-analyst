@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from 'ai/react';
+import ReactMarkdown from 'react-markdown';
 import type { FindingCard } from '@claims-analyst/shared';
 
 interface CommandPromptProps {
@@ -107,18 +108,67 @@ export function CommandPrompt({ activeFinding }: CommandPromptProps) {
               >
                 {m.role === 'user' ? 'YOU' : 'AGENT'}
               </span>
-              <p
-                className="text-xs leading-relaxed"
-                style={{
-                  color: 'var(--text-secondary)',
-                  fontFamily:
-                    m.role === 'assistant'
-                      ? 'system-ui, sans-serif'
-                      : undefined,
-                }}
-              >
-                {m.content}
-              </p>
+              {m.role === 'assistant' ? (
+                <div
+                  className="text-xs leading-relaxed"
+                  style={{
+                    color: 'var(--text-secondary)',
+                    fontFamily: 'system-ui, sans-serif',
+                  }}
+                >
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => (
+                        <p className="mb-1 last:mb-0">{children}</p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc pl-4 mb-1 space-y-0.5">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal pl-4 mb-1 space-y-0.5">{children}</ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-xs">{children}</li>
+                      ),
+                      strong: ({ children }) => (
+                        <strong style={{ color: 'var(--text-primary)' }}>{children}</strong>
+                      ),
+                      code: ({ children }) => (
+                        <code
+                          className="text-[11px] px-1 py-0.5"
+                          style={{
+                            background: 'var(--surface-3)',
+                            borderRadius: '2px',
+                            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                          }}
+                        >
+                          {children}
+                        </code>
+                      ),
+                      pre: ({ children }) => (
+                        <pre
+                          className="text-[11px] p-2 mb-1 overflow-x-auto"
+                          style={{
+                            background: 'var(--surface-3)',
+                            borderRadius: '2px',
+                          }}
+                        >
+                          {children}
+                        </pre>
+                      ),
+                    }}
+                  >
+                    {m.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {m.content}
+                </p>
+              )}
             </div>
           ))}
           {isLoading && (
