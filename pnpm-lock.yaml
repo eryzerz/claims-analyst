@@ -94,6 +94,9 @@ importers:
       postcss:
         specifier: ^8.5.23
         version: 8.5.23
+      tsx:
+        specifier: ^4.23.1
+        version: 4.23.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
